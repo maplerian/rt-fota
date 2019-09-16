@@ -1,0 +1,51 @@
+---- get_pin Matches (8 in 2 files) ----
+drv_gpio.c (libraries\HAL_Drivers) line 279 : 
+#define ITEM_NUM(items) sizeof(items) / sizeof(items[0])
+static const struct pin_index *get_pin(uint8_t pin)
+{
+    const struct pin_index *index;
+
+stm32_pin_write in drv_gpio.c (libraries\HAL_Drivers) : 
+
+    index = get_pin(pin);
+    if (index == RT_NULL)
+    {
+        return;
+stm32_pin_read in drv_gpio.c (libraries\HAL_Drivers) : 
+
+    index = get_pin(pin);
+    if (index == RT_NULL)
+    {
+        return value;
+stm32_pin_mode in drv_gpio.c (libraries\HAL_Drivers) : 
+
+    index = get_pin(pin);
+    if (index == RT_NULL)
+    {
+        return;
+stm32_pin_attach_irq in drv_gpio.c (libraries\HAL_Drivers) : 
+
+    index = get_pin(pin);
+    if (index == RT_NULL)
+    {
+        return RT_ENOSYS;
+stm32_pin_dettach_irq in drv_gpio.c (libraries\HAL_Drivers) : 
+
+    index = get_pin(pin);
+    if (index == RT_NULL)
+    {
+        return RT_ENOSYS;
+stm32_pin_irq_enable in drv_gpio.c (libraries\HAL_Drivers) : 
+
+    index = get_pin(pin);
+    if (index == RT_NULL)
+    {
+        return RT_ENOSYS;
+sfud_nor_flash_init in fal_flash_sfud_port.c (packages\fal\samples\porting) : 
+	
+	extern const struct pin_index *get_pin(uint8_t pin);
+	
+	cs_pin = get_pin(BSP_DATAFALSH_CS_PIN);
+	if (cs_pin != RT_NULL)
+	{
+		rt_hw_spi_device_attach("spi1", NOR_FLASH_SPI_DEV_NAME, cs_pin->gpio, cs_pin->pin);
