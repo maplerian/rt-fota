@@ -52,8 +52,8 @@
 #define RT_USING_HEAP
 //#define RT_USING_MEMPOOL
 #define RT_USING_MEMHEAP
-#define RT_USING_MEMHEAP_AS_HEAP
-//#define RT_USING_SMALL_MEM
+//#define RT_USING_MEMHEAP_AS_HEAP
+#define RT_USING_SMALL_MEM
 //#define RT_USING_TINY_SIZE
 
 #if defined(RTE_USING_FINSH)
@@ -71,7 +71,7 @@
 
 #define RT_USING_PIN
 #define RT_USING_SERIAL
-#define RT_SERIAL_USING_DMA
+//#define RT_SERIAL_USING_DMA
 #define RT_USING_RTC
 #define RT_USING_SPI
 #define RT_USING_SFUD
@@ -104,6 +104,17 @@
 #define FAL_USING_NOR_FLASH_DEV_NAME "nor_flash0"
 #define PKG_USING_FAL_LATEST_VERSION
 #define PKG_FAL_VER_NUM 0x99999
+
+/* easyflash package */
+#define PKG_EASYFLASH
+#define PKG_EASYFLASH_ENV
+#define PKG_EASYFLASH_ENV_AUTO_UPDATE
+#define PKG_EASYFLASH_ENV_VER_NUM		0
+#define PKG_EASYFLASH_IAP
+#define PKG_EASYFLASH_ERASE_GRAN		4096
+#define PKG_EASYFLASH_WRITE_GRAN		8
+#define PKG_EASYFLASH_START_ADDR		0
+#define PKG_EASYFLASH_DEBUG
 
 /* Hardware Drivers Config */
 #define SOC_FAMILY_STM32
