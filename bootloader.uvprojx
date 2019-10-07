@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER, STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>..\stm32f407-bootloader;.\rt-thread\include;.\rt-thread\components\drivers\include;.\board\CubeMX_Config\Inc;.\libraries\STM32F4xx_HAL\STM32F4xx_HAL_Driver\Inc;.\libraries\STM32F4xx_HAL\CMSIS\Include;.\libraries\STM32F4xx_HAL\CMSIS\Device\ST\STM32F4xx\Include;.\libraries\HAL_Drivers;.\libraries\HAL_Drivers\config;.\libraries\HAL_Drivers\drv_flash;.\board;.\applications;.\rt-thread\components\drivers\spi\sfud\inc;.\rt-thread\components\drivers\spi;.\packages\fal\inc;.\packages\fal\samples\porting</IncludePath>
+              <IncludePath>..\stm32f407-bootloader;.\rt-thread\include;.\rt-thread\components\drivers\include;.\board\CubeMX_Config\Inc;.\libraries\STM32F4xx_HAL\STM32F4xx_HAL_Driver\Inc;.\libraries\STM32F4xx_HAL\CMSIS\Include;.\libraries\STM32F4xx_HAL\CMSIS\Device\ST\STM32F4xx\Include;.\libraries\HAL_Drivers;.\libraries\HAL_Drivers\config;.\libraries\HAL_Drivers\drv_flash;.\board;.\applications;.\rt-thread\components\drivers\spi\sfud\inc;.\rt-thread\components\drivers\spi;.\packages\fal\inc;.\packages\fal\samples\porting;.\packages\tinycrypt\include;.\packages\quicklz;.\packages\fastlz</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -462,14 +462,19 @@
           <GroupName>Application</GroupName>
           <Files>
             <File>
-              <FileName>main.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\applications\main.c</FilePath>
-            </File>
-            <File>
               <FileName>rtconfig.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\rtconfig.h</FilePath>
+            </File>
+            <File>
+              <FileName>rt_fota.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\rt_fota.c</FilePath>
+            </File>
+            <File>
+              <FileName>rt_fota_crc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\rt_fota_crc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -634,12 +639,32 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>ulog</GroupName>
+          <GroupName>TinyCrypt</GroupName>
           <Files>
             <File>
-              <FileName>ulog.c</FileName>
+              <FileName>tiny_aes.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\rt-thread\components\utilities\ulog\ulog.c</FilePath>
+              <FilePath>.\packages\tinycrypt\src\tiny_aes.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Fastlz</GroupName>
+          <Files>
+            <File>
+              <FileName>fastlz.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\packages\fastlz\fastlz.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Quicklz</GroupName>
+          <Files>
+            <File>
+              <FileName>quicklz.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\packages\quicklz\quicklz.c</FilePath>
             </File>
           </Files>
         </Group>

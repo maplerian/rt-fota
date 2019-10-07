@@ -105,16 +105,8 @@
 #define PKG_USING_FAL_LATEST_VERSION
 #define PKG_FAL_VER_NUM 0x99999
 
-/* easyflash package */
-#define PKG_EASYFLASH
-#define PKG_EASYFLASH_ENV
-#define PKG_EASYFLASH_ENV_AUTO_UPDATE
-#define PKG_EASYFLASH_ENV_VER_NUM		0
-#define PKG_EASYFLASH_IAP
-#define PKG_EASYFLASH_ERASE_GRAN		4096
-#define PKG_EASYFLASH_WRITE_GRAN		8
-#define PKG_EASYFLASH_START_ADDR		0
-#define PKG_EASYFLASH_DEBUG
+/* Tinycrypt package */
+#define TINY_CRYPT_AES
 
 /* Hardware Drivers Config */
 #define SOC_FAMILY_STM32

@@ -18,10 +18,9 @@
 #include <app_log.h>
 
 int main(void)
-{		
+{
 	/* partition initialized */
 	fal_init(); 
-														
+
     return RT_EOK;
 }
-
