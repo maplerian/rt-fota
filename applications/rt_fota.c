@@ -26,13 +26,18 @@
 #define RT_FOTA_BLOCK_HEADER_SIZE			4
 #endif
 
-#ifndef RT_FOTA_FASTLZ_BUFFER_SIZE			
-#define RT_FOTA_FASTLZ_BUFFER_SIZE			4096
+#ifndef RT_FOTA_CMPRS_BUFFER_SIZE			
+#define RT_FOTA_CMPRS_BUFFER_SIZE			4096
 #endif
 
 #ifndef RT_FOTA_FASTLZ_BUFFER_PADDING
-#define RT_FOTA_FASTLZ_BUFFER_PADDING 		FASTLZ_BUFFER_PADDING(RT_FOTA_FASTLZ_BUFFER_SIZE)
+#define RT_FOTA_FASTLZ_BUFFER_PADDING 		FASTLZ_BUFFER_PADDING(RT_FOTA_CMPRS_BUFFER_SIZE)
 #endif
+
+#ifndef RT_FOTA_QUICKLZ_BUFFER_PADDING
+#define RT_FOTA_QUICKLZ_BUFFER_PADDING		QLZ_BUFFER_PADDING
+#endif
+
 
 const char boot_log_buf[] = 
 " ____ _____	 _____ ___ _____  _ 	   \r\n\
@@ -286,6 +291,8 @@ static int rt_fota_read_part(const struct fal_partition *part, int read_pos, tin
 		goto __exit_read_decrypt;
 	}
 
+	rt_memset(decrypt_buf, 0x0, decrypt_len);
+
 	/* Not use AES256 algorithm */
 	if (aes_ctx == RT_NULL || aes_iv == RT_NULL)
 	{
@@ -297,22 +304,22 @@ static int rt_fota_read_part(const struct fal_partition *part, int read_pos, tin
 		goto __exit_read_decrypt;
 	}
 
-	encrypt_buf = rt_malloc(RT_FOTA_ALGO_BUFF_SIZE);
+	encrypt_buf = rt_malloc(decrypt_len);
 	if (encrypt_buf == RT_NULL)
 	{
 		fota_err = RT_FOTA_GENERAL_ERR;
 		goto __exit_read_decrypt;
 	}
-	rt_memset(encrypt_buf, 0x0, RT_FOTA_ALGO_BUFF_SIZE);
+	rt_memset(encrypt_buf, 0x0, decrypt_len);
 
-	fota_err = fal_partition_read(part, sizeof(rt_fota_part_head) + read_pos, encrypt_buf, RT_FOTA_ALGO_BUFF_SIZE);
+	fota_err = fal_partition_read(part, sizeof(rt_fota_part_head) + read_pos, encrypt_buf, decrypt_len);
 	if (fota_err <= 0 || fota_err % 16 != 0)
 	{
 		fota_err = RT_FOTA_PART_READ_ERR;
 		goto __exit_read_decrypt;
 	}
 
-	tiny_aes_crypt_cbc(aes_ctx, AES_DECRYPT, decrypt_len, aes_iv, encrypt_buf, decrypt_buf);
+	tiny_aes_crypt_cbc(aes_ctx, AES_DECRYPT, fota_err, aes_iv, encrypt_buf, decrypt_buf);
 __exit_read_decrypt:
 	if (encrypt_buf)
 		rt_free(encrypt_buf);
@@ -332,14 +339,18 @@ int rt_fota_upgrade(const char *part_name)
 	rt_uint8_t *crypt_buf = RT_NULL;
 	
 	int fw_raw_pos = 0;
+	int fw_raw_len = 0;
 	rt_uint32_t total_copy_size = 0;
 
 	rt_uint8_t block_hdr_buf[RT_FOTA_BLOCK_HEADER_SIZE];	
 	rt_uint32_t block_hdr_pos = RT_FOTA_ALGO_BUFF_SIZE;
 	rt_uint32_t block_size = 0;
 	rt_uint32_t dcprs_size = 0;
+	
+	qlz_state_decompress *dcprs_state = RT_NULL;
 	rt_uint8_t *cmprs_buff = RT_NULL;
 	rt_uint8_t *dcprs_buff = RT_NULL;
+	rt_uint32_t padding_size = 0;
 
 	if (part_name == RT_NULL)
 	{
@@ -383,39 +394,68 @@ int rt_fota_upgrade(const char *part_name)
 		rt_memcpy(aes_iv, RT_FOTA_ALGO_AES_IV, rt_strlen(RT_FOTA_ALGO_AES_IV));
 		tiny_aes_setkey_dec(aes_ctx, (rt_uint8_t *)RT_FOTA_ALGO_AES_KEY, 256);
 	}
+	else if ((part_head->fota_algo & RT_FOTA_CRYPT_STAT_MASK) == RT_FOTA_CRYPT_ALGO_XOR)
+	{
+		log_i("Not surpport XOR.");
+		fota_err = RT_FOTA_GENERAL_ERR;
+		goto __exit_upgrade;
+	}
 	
-	/* If enable compress function */	
+	/* If enable fastlz compress function */	
 	if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) != RT_FOTA_CMPRS_ALGO_FASTLZ) 
 	{
-		cmprs_buff = rt_malloc(RT_FOTA_FASTLZ_BUFFER_SIZE + RT_FOTA_FASTLZ_BUFFER_PADDING);
-		dcprs_buff = rt_malloc(RT_FOTA_FASTLZ_BUFFER_SIZE);	
+		cmprs_buff = rt_malloc(RT_FOTA_CMPRS_BUFFER_SIZE + RT_FOTA_FASTLZ_BUFFER_PADDING);
+		dcprs_buff = rt_malloc(RT_FOTA_CMPRS_BUFFER_SIZE);	
 		if (cmprs_buff == RT_NULL || dcprs_buff == RT_NULL)
 		{
 			log_d("Not enough memory for firmware hash verify.");
 			fota_err = RT_FOTA_NO_MEM_ERR;
 			goto __exit_upgrade;
 		}
+
+		padding_size = RT_FOTA_FASTLZ_BUFFER_PADDING;
+	}
+	else if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) != RT_FOTA_CMPRS_ALGO_QUICKLZ) 
+	{
+		cmprs_buff = rt_malloc(RT_FOTA_CMPRS_BUFFER_SIZE + RT_FOTA_QUICKLZ_BUFFER_PADDING);
+		dcprs_buff = rt_malloc(RT_FOTA_CMPRS_BUFFER_SIZE);	
+		dcprs_state = rt_malloc(sizeof(qlz_state_decompress));
+		if (cmprs_buff == RT_NULL || dcprs_buff == RT_NULL || dcprs_state == RT_NULL)
+		{
+			log_d("Not enough memory for firmware hash verify.");
+			fota_err = RT_FOTA_NO_MEM_ERR;
+			goto __exit_upgrade;
+		}
+
+		padding_size = RT_FOTA_QUICKLZ_BUFFER_PADDING;
+		rt_memset(dcprs_state, 0x0, sizeof(qlz_state_decompress));
+	}
+	else if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) != RT_FOTA_CMPRS_ALGO_GZIP) 
+	{
+		log_i("Not surpport GZIP.");
+		fota_err = RT_FOTA_GENERAL_ERR;
+		goto __exit_upgrade;
 	}
 
 	log_i("Start to copy firmware from %s to %s partition:", part->name, part_head->app_part_name);
 	while (fw_raw_pos < part_head->com_size)
 	{
-		if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) != RT_FOTA_CMPRS_ALGO_FASTLZ) 
+		if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) != RT_FOTA_CRYPT_ALGO_NONE) 
 		{		
 			if (block_hdr_pos >= RT_FOTA_ALGO_BUFF_SIZE)
 			{
-				fota_err = rt_fota_read_part(part, fw_raw_pos, aes_ctx, aes_iv, crypt_buf, RT_FOTA_ALGO_BUFF_SIZE);
-				if (fota_err < 0)
+				fw_raw_len = rt_fota_read_part(part, fw_raw_pos, aes_ctx, aes_iv, crypt_buf, RT_FOTA_ALGO_BUFF_SIZE);
+				if (fw_raw_len < 0)
 				{
 					log_d("AES256 algorithm failed.");
 					fota_err = RT_FOTA_PART_READ_ERR;
 					goto __exit_upgrade;
 				}
-				fw_raw_pos += fota_err;
+				fw_raw_pos += fw_raw_len;
 
 				rt_memcpy(block_hdr_buf, crypt_buf, RT_FOTA_BLOCK_HEADER_SIZE);
 				block_size = block_hdr_buf[0] * (1 << 24) + block_hdr_buf[1] * (1 << 16) + block_hdr_buf[2] * (1 << 8) + block_hdr_buf[3];
-				rt_memset(cmprs_buff, 0x0, RT_FOTA_FASTLZ_BUFFER_SIZE + RT_FOTA_FASTLZ_BUFFER_PADDING);
+				rt_memset(cmprs_buff, 0x0, RT_FOTA_CMPRS_BUFFER_SIZE + padding_size);
 				rt_memcpy(cmprs_buff, &crypt_buf[RT_FOTA_BLOCK_HEADER_SIZE], block_size);
 
 				block_hdr_pos = RT_FOTA_BLOCK_HEADER_SIZE + block_size;
@@ -433,18 +473,18 @@ int rt_fota_upgrade(const char *part_name)
 					{
 						block_size = block_hdr_buf[0] * (1 << 24) + block_hdr_buf[1] * (1 << 16) + block_hdr_buf[2] * (1 << 8) + block_hdr_buf[3];
 						
-						rt_memset(cmprs_buff, 0x0, RT_FOTA_FASTLZ_BUFFER_SIZE + RT_FOTA_FASTLZ_BUFFER_PADDING);
+						rt_memset(cmprs_buff, 0x0, RT_FOTA_CMPRS_BUFFER_SIZE + padding_size);
 						if (block_size > (RT_FOTA_ALGO_BUFF_SIZE - block_hdr_pos))
 						{								
 							rt_memcpy(cmprs_buff, &crypt_buf[block_hdr_pos], (RT_FOTA_ALGO_BUFF_SIZE - block_hdr_pos));
-							fota_err = rt_fota_read_part(part, fw_raw_pos, aes_ctx, aes_iv, crypt_buf, RT_FOTA_ALGO_BUFF_SIZE);
-							if (fota_err < 0)
+							fw_raw_len = rt_fota_read_part(part, fw_raw_pos, aes_ctx, aes_iv, crypt_buf, RT_FOTA_ALGO_BUFF_SIZE);
+							if (fw_raw_len < 0)
 							{
 								log_d("AES256 algorithm failed.");
 								fota_err = RT_FOTA_PART_READ_ERR;
 								goto __exit_upgrade;
 							}
-							fw_raw_pos += fota_err;
+							fw_raw_pos += fw_raw_len;
 
 							rt_memcpy(&cmprs_buff[RT_FOTA_ALGO_BUFF_SIZE - block_hdr_pos], &crypt_buf[0], (block_size +  block_hdr_pos) - RT_FOTA_ALGO_BUFF_SIZE);
 							block_hdr_pos = (block_size +  block_hdr_pos) - RT_FOTA_ALGO_BUFF_SIZE;
@@ -460,14 +500,14 @@ int rt_fota_upgrade(const char *part_name)
 				
 				if (hdr_tmp_pos < RT_FOTA_BLOCK_HEADER_SIZE)
 				{				
-					fota_err = rt_fota_read_part(part, fw_raw_pos, aes_ctx, aes_iv, crypt_buf, RT_FOTA_ALGO_BUFF_SIZE);
-					if (fota_err < 0)
+					fw_raw_len = rt_fota_read_part(part, fw_raw_pos, aes_ctx, aes_iv, crypt_buf, RT_FOTA_ALGO_BUFF_SIZE);
+					if (fw_raw_len < 0)
 					{
 						log_d("AES256 algorithm failed.");
 						fota_err = RT_FOTA_PART_READ_ERR;
 						goto __exit_upgrade;
 					}
-					fw_raw_pos += fota_err;
+					fw_raw_pos += fw_raw_len;
 
 					block_hdr_pos = 0;
 					while (hdr_tmp_pos < RT_FOTA_BLOCK_HEADER_SIZE)
@@ -476,22 +516,30 @@ int rt_fota_upgrade(const char *part_name)
 					}
 					block_size = block_hdr_buf[0] * (1 << 24) + block_hdr_buf[1] * (1 << 16) + block_hdr_buf[2] * (1 << 8) + block_hdr_buf[3];
 
-					rt_memset(cmprs_buff, 0x0, RT_FOTA_FASTLZ_BUFFER_SIZE + RT_FOTA_FASTLZ_BUFFER_PADDING);
+					rt_memset(cmprs_buff, 0x0, RT_FOTA_CMPRS_BUFFER_SIZE + padding_size);
 					rt_memcpy(cmprs_buff, &crypt_buf[block_hdr_pos], block_size);
 
 					block_hdr_pos = (block_hdr_pos + block_size) % RT_FOTA_ALGO_BUFF_SIZE;
 				}
 			}
 
-			rt_memset(dcprs_buff, 0x0, RT_FOTA_FASTLZ_BUFFER_SIZE);			
-			dcprs_size = fastlz_decompress((const void *)&cmprs_buff[0], block_size, &dcprs_buff[0], RT_FOTA_FASTLZ_BUFFER_SIZE);
+			rt_memset(dcprs_buff, 0x0, RT_FOTA_CMPRS_BUFFER_SIZE);		
+			if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) == RT_FOTA_CMPRS_ALGO_FASTLZ) 
+			{
+				dcprs_size = fastlz_decompress((const void *)&cmprs_buff[0], block_size, &dcprs_buff[0], RT_FOTA_CMPRS_BUFFER_SIZE);
+			}
+			else if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) == RT_FOTA_CMPRS_ALGO_QUICKLZ) 
+			{
+				dcprs_size = qlz_decompress((const char *)&cmprs_buff[0], &dcprs_buff[0], dcprs_state);
+			}
+			
 			if (dcprs_size <= 0)
 			{
-				log_d("Fastlz decompress failed.");
+				log_d("Decompress failed: %d.", dcprs_size);
 				fota_err = RT_FOTA_GENERAL_ERR;
 				goto __exit_upgrade;
 			}
-			
+
 			if (rt_fota_write_app_part(total_copy_size, dcprs_buff, dcprs_size) < 0)
 			{
 				fota_err = RT_FOTA_COPY_FAILED;
@@ -501,28 +549,17 @@ int rt_fota_upgrade(const char *part_name)
 			total_copy_size += dcprs_size;
 			rt_kprintf(">");
 		}
-		else if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) != RT_FOTA_CMPRS_ALGO_QUICKLZ) 
-		{
-			log_d("Quicklz not supported.");
-			fota_err = RT_FOTA_ALGO_NOT_SUPPORTED;
-			goto __exit_upgrade;
-		}
-		else if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) != RT_FOTA_CMPRS_ALGO_GZIP) 
-		{
-			log_d("GZIP not supported.")
-			fota_err = RT_FOTA_ALGO_NOT_SUPPORTED;
-			goto __exit_upgrade;
-		}
+		/* no compress option */
 		else
 		{
-			fota_err = rt_fota_read_part(part, fw_raw_pos, aes_ctx, aes_iv, crypt_buf, RT_FOTA_ALGO_BUFF_SIZE);
-			if (fota_err < 0)
+			fw_raw_len = rt_fota_read_part(part, fw_raw_pos, aes_ctx, aes_iv, crypt_buf, RT_FOTA_ALGO_BUFF_SIZE);
+			if (fw_raw_len < 0)
 			{
 				log_d("AES256 algorithm failed.");
 				fota_err = RT_FOTA_PART_READ_ERR;
 				goto __exit_upgrade;
 			}		
-			fw_raw_pos += fota_err;
+			fw_raw_pos += fw_raw_len;
 
 			if (rt_fota_write_app_part(total_copy_size, crypt_buf, fota_err) < 0)
 			{
@@ -530,9 +567,58 @@ int rt_fota_upgrade(const char *part_name)
 				goto __exit_upgrade;
 			}
 			
-			total_copy_size += fota_err;
+			total_copy_size += fw_raw_len;
 			rt_kprintf(">");
 		}
+	}
+
+	/* it has compress option */
+	if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) != RT_FOTA_CRYPT_ALGO_NONE)
+	{
+		if ((block_hdr_pos < fw_raw_len) && ((fw_raw_len - block_hdr_pos) > RT_FOTA_BLOCK_HEADER_SIZE))
+		{
+			rt_memcpy(block_hdr_buf, &crypt_buf[block_hdr_pos], RT_FOTA_BLOCK_HEADER_SIZE);
+			block_size = block_hdr_buf[0] * (1 << 24) + block_hdr_buf[1] * (1 << 16) + block_hdr_buf[2] * (1 << 8) + block_hdr_buf[3];
+			if ((fw_raw_len - block_hdr_pos - RT_FOTA_BLOCK_HEADER_SIZE) >= block_size)
+			{
+				rt_memset(cmprs_buff, 0x0, RT_FOTA_CMPRS_BUFFER_SIZE + padding_size);				
+				rt_memcpy(cmprs_buff, &crypt_buf[block_hdr_pos + RT_FOTA_BLOCK_HEADER_SIZE], block_size);
+				rt_memset(dcprs_buff, 0x0, RT_FOTA_CMPRS_BUFFER_SIZE);
+
+				if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) == RT_FOTA_CMPRS_ALGO_FASTLZ) 
+				{
+					dcprs_size = fastlz_decompress((const void *)&cmprs_buff[0], block_size, &dcprs_buff[0], RT_FOTA_CMPRS_BUFFER_SIZE);
+				}
+				else if ((part_head->fota_algo & RT_FOTA_CMPRS_STAT_MASK) == RT_FOTA_CMPRS_ALGO_QUICKLZ) 
+				{
+					dcprs_size = qlz_decompress((const char *)&cmprs_buff[0], &dcprs_buff[0], dcprs_state);
+				}
+			
+				if (dcprs_size <= 0)
+				{
+					log_d("Decompress failed: %d.", dcprs_size);
+					fota_err = RT_FOTA_GENERAL_ERR;
+					goto __exit_upgrade;
+				}
+
+				if (rt_fota_write_app_part(total_copy_size, dcprs_buff, dcprs_size) < 0)
+				{
+					fota_err = RT_FOTA_COPY_FAILED;
+					goto __exit_upgrade;
+				}
+
+				total_copy_size += dcprs_size;
+				rt_kprintf(">");
+			}
+		}
+	}
+
+	/* 有可能两个值不相等,因为AES需要填充16字节整数,但最后的解密解压值的代码数量必须是大于等于raw_size */
+	/* 比较好的方法是做一个校验,目前打包软件的HASH_CODE算法不知道 */
+	if (total_copy_size < part_head->raw_size)
+	{
+		log_d("Decompress check failed.");
+		fota_err = RT_FOTA_GENERAL_ERR;
 	}
 
 __exit_upgrade:
@@ -550,6 +636,9 @@ __exit_upgrade:
 
 	if (dcprs_buff)
 		rt_free(dcprs_buff);
+
+	if (dcprs_state)
+		rt_free(dcprs_state);
 
 	if (fota_err == RT_FOTA_NO_ERR)
 	{
