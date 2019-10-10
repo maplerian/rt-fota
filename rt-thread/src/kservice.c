@@ -529,29 +529,6 @@ char *strdup(const char *s) __attribute__((alias("rt_strdup")));
 /**
  * This function will show the version of rt-thread rtos
  */
-const static char bootloader_log[][128] = {
-	{" _____            _____ _____       _______ _____ ____  _   _ "},
-	{"|  __ \\     /\\   |  __ \\_   _|   /\\|__   __|_   _/ __ \\| \\ | |"},		
-	{"| |__) |   /  \\  | |  | || |    /  \\  | |    | || |  | |  \\| |"},		
-	{"|  _  /   / /\\ \\ | |  | || |   / /\\ \\ | |    | || |  | | . ` |"},		
-	{"| | \\ \\  / ____ \\| |__| || |_ / ____ \\| |   _| || |__| | |\\  |"},		
-	{"|_|  \\_\\/_/    \\_\\_____/_____/_/    \\_\\_|  |_____\\____/|_| \\_|"},		
-};
-void rt_show_version(void)
-{
-	int idx = 0, cnt; 
-	cnt = sizeof(bootloader_log) / 128;
-	
-	rt_kprintf("\n%s", &bootloader_log[idx++]);
-	while (idx < cnt)
-	{
-		rt_kprintf("%s\n", &bootloader_log[idx++]);
-	}
-	
-	rt_kprintf("2017 - 2019 Copyright by radiation team\n");
-	rt_kprintf("%d.%d.%d build %s\n", RT_VERSION, RT_SUBVERSION, RT_REVISION, __DATE__);
-}
-#if 0
 void rt_show_version(void)
 {
     rt_kprintf("\n \\ | /\n");
@@ -560,7 +537,6 @@ void rt_show_version(void)
                RT_VERSION, RT_SUBVERSION, RT_REVISION, __DATE__);
     rt_kprintf(" 2006 - 2019 Copyright by rt-thread team\n");
 }
-#endif
 RTM_EXPORT(rt_show_version);
 
 /* private function */

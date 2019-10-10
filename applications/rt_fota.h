@@ -22,12 +22,17 @@
 
 #define RT_FOTA_SW_VERSION             "0.1.0"
 
-/* OTA download partition name */
+/* FOTA default partition name */
+#ifndef RT_FOTA_APP_PART_NAME
+#define RT_FOTA_APP_PART_NAME           "app"
+#endif
+
+/* FOTA download partition name */
 #ifndef RT_FOTA_FM_PART_NAME
 #define RT_FOTA_FM_PART_NAME           "fm_area"
 #endif
 
-/* OTA default partition name */
+/* FOTA default partition name */
 #ifndef RT_FOTA_DF_PART_NAME
 #define RT_FOTA_DF_PART_NAME           "df_area"
 #endif

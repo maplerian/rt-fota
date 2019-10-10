@@ -286,9 +286,9 @@ int fal_partition_init(void)
 
 _exit:
 
-#if FAL_DEBUG
+//#if FAL_DEBUG
     fal_show_part_table();
-#endif
+//#endif
 
 #ifndef FAL_PART_HAS_TABLE_CFG
     if (new_part)
