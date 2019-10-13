@@ -22,7 +22,7 @@
 
 #define RT_FOTA_SW_VERSION             "0.1.0"
 
-/* FOTA default partition name */
+/* FOTA application partition name */
 #ifndef RT_FOTA_APP_PART_NAME
 #define RT_FOTA_APP_PART_NAME           "app"
 #endif

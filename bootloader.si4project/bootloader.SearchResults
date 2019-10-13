@@ -1,3 +1,3 @@
----- rt_spi_bus_attach_device Matches (2 in 2 files) ----
-stm32_qspi_bus_attach_device in drv_qspi.c (libraries\HAL_Drivers) :     result = rt_spi_bus_attach_device(&qspi_device->parent, device_name, bus_name, (void *)cs_pin);
-rt_hw_spi_device_attach in drv_spi.c (libraries\HAL_Drivers) :     result = rt_spi_bus_attach_device(spi_device, device_name, bus_name, (void *)cs_pin);
+---- shell.h Matches (2 in 2 files) ----
+msh.c (rt-thread\components\finsh) line 18 : #include <shell.h>
+shell.c (rt-thread\components\finsh) line 26 : #include "shell.h"

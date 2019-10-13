@@ -10,6 +10,11 @@
 
 #include <rt_fota.h>
 
+#if defined(RT_USING_FINSH) && defined(FINSH_USING_MSH)
+#include <finsh.h>
+#include <shell.h>
+#endif
+
 #ifndef RT_FOTA_ALGO_BUFF_SIZE
 #define RT_FOTA_ALGO_BUFF_SIZE				4096
 #endif
@@ -695,8 +700,6 @@ void rt_boot_entry(void *arg)
 {
 	int fota_err = RT_FOTA_NO_ERR;
 
-//	rt_fota_print_log();
-
 	fota_err = rt_fota_boot_verify();
 	if (fota_err != RT_FOTA_NO_ERR)       
 		return;
@@ -715,19 +718,33 @@ void rt_boot_entry(void *arg)
 __exit_boot_entry:
 	rt_fota_start_application();
 
-	log_i("Auto boot failed, Please switch manual boot.");
+	log_i("Excute application failed, Load default partition.");
+
+	if (rt_fota_part_fw_verify(RT_FOTA_DF_PART_NAME) == RT_FOTA_NO_ERR)
+	{
+		if (rt_fota_upgrade(RT_FOTA_DF_PART_NAME) == RT_FOTA_NO_ERR)
+		{
+			rt_fota_start_application();
+		}
+	}
+
+	log_i("Device boot failed, Please switch manual boot.");
 }
 
 int main(void)
 {
 	rt_thread_t tid;
 
-	tid = rt_thread_create("ra-boot", rt_boot_entry, RT_NULL, 4096, RT_THREAD_PRIORITY_MAX - 1, 10);
+	tid = rt_thread_create("ra-boot", rt_boot_entry, RT_NULL, 4096, RT_THREAD_PRIORITY_MAX - 3, 10);
 	if (tid != RT_NULL)
 	{
 		rt_thread_startup(tid);
 	}
 	
+#if defined(RT_USING_FINSH) && defined(FINSH_USING_MSH)
+	finsh_set_prompt("ra-fota");
+#endif
+
     return RT_EOK;
 }
 

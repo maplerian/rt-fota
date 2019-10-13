@@ -24,7 +24,7 @@
 #define RT_USING_USER_MAIN
 
 #define RT_DEBUG_INIT 0
-//#define RT_USING_OVERFLOW_CHECK
+#define RT_USING_OVERFLOW_CHECK
 //#define RT_USING_HOOK
 //#define RT_USING_IDLE_HOOK
 
@@ -57,16 +57,16 @@
 #define RT_USING_SMALL_MEM
 //#define RT_USING_TINY_SIZE
 
-#if defined(RTE_USING_FINSH)
+/* Finsh Configuration */
 #define RT_USING_FINSH
 #define FINSH_USING_MSH
 #define FINSH_USING_MSH_ONLY
 #define __FINSH_THREAD_PRIORITY     5
 #define FINSH_THREAD_PRIORITY       (RT_THREAD_PRIORITY_MAX / 8 * __FINSH_THREAD_PRIORITY + 1)
-#define FINSH_THREAD_STACK_SIZE     512
+#define FINSH_THREAD_STACK_SIZE     2048
 #define FINSH_HISTORY_LINES	        1
 #define FINSH_USING_SYMTAB
-#endif
+
 
 /* Device Drivers */
 
