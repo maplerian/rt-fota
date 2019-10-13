@@ -10,8 +10,7 @@
       <TargetName>bootloader</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
-      <uAC6>0</uAC6>
+      <pCCUsed>5060300::V5.06 update 3 (build 300)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F407ZE</Device>
@@ -311,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -324,7 +323,6 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
-            <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -337,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER, STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>..\stm32f407-bootloader;.\rt-thread\include;.\rt-thread\components\drivers\include;.\board\CubeMX_Config\Inc;.\libraries\STM32F4xx_HAL\STM32F4xx_HAL_Driver\Inc;.\libraries\STM32F4xx_HAL\CMSIS\Include;.\libraries\STM32F4xx_HAL\CMSIS\Device\ST\STM32F4xx\Include;.\libraries\HAL_Drivers;.\libraries\HAL_Drivers\config;.\libraries\HAL_Drivers\drv_flash;.\board;.\applications;.\rt-thread\components\drivers\spi\sfud\inc;.\rt-thread\components\drivers\spi;.\packages\fal\inc;.\packages\fal\samples\porting;.\packages\tinycrypt\include;.\packages\quicklz;.\packages\fastlz;.\rt-thread\components\finsh</IncludePath>
+              <IncludePath>..\stm32f407-bootloader;.\rt-thread\include;.\rt-thread\components\drivers\include;.\board\CubeMX_Config\Inc;.\libraries\STM32F4xx_HAL\STM32F4xx_HAL_Driver\Inc;.\libraries\STM32F4xx_HAL\CMSIS\Include;.\libraries\STM32F4xx_HAL\CMSIS\Device\ST\STM32F4xx\Include;.\libraries\HAL_Drivers;.\libraries\HAL_Drivers\config;.\libraries\HAL_Drivers\drv_flash;.\board;.\applications;.\rt-thread\components\drivers\spi\sfud\inc;.\rt-thread\components\drivers\spi;.\packages\fal\inc;.\packages\fal\samples\porting;.\packages\tinycrypt\include;.\packages\quicklz;.\packages\fastlz;.\rt-thread\components\finsh;.\rt-thread\components\utilities\ymodem</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -476,6 +474,26 @@
               <FileType>1</FileType>
               <FilePath>.\applications\main.c</FilePath>
             </File>
+            <File>
+              <FileName>rt_fota.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\rt_fota.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Downloader</GroupName>
+          <Files>
+            <File>
+              <FileName>ymodem_ota.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\packages\downloader\src\ymodem_ota.c</FilePath>
+            </File>
+            <File>
+              <FileName>ymodem.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\rt-thread\components\utilities\ymodem\ymodem.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -525,6 +543,11 @@
               <FileName>drv_usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\libraries\HAL_Drivers\drv_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>drv_wdt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\libraries\HAL_Drivers\drv_wdt.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -836,11 +859,5 @@
       </Groups>
     </Target>
   </Targets>
-
-  <RTE>
-    <apis/>
-    <components/>
-    <files/>
-  </RTE>
 
 </Project>

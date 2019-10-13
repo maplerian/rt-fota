@@ -8,7 +8,7 @@
  * 2019-09-22     Warfalcon    first version
  */
 
-#include <rt_fota.h>
+#include <rtthread.h>
 
 static rt_uint32_t crc_tab[256];
 

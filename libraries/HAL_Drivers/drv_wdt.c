@@ -27,6 +27,7 @@ static rt_watchdog_t watchdog;
 
 static rt_err_t wdt_init(rt_watchdog_t *wdt)
 {
+    LOG_I("Watchdog initialized success!");
     return RT_EOK;
 }
 

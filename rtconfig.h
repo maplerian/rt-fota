@@ -135,6 +135,29 @@
 
 #define BSP_RS485_DIR_PIN 52
 
+/* RT-FOTA module define */
+#define RT_FOTA_SW_VERSION      "0.1.0"
 
+/* Enable Ymodem OTA */
+#define PKG_USING_YMODEM_OTA
+
+/* FOTA application partition name */
+#ifndef RT_FOTA_APP_PART_NAME
+#define RT_FOTA_APP_PART_NAME   "app"
+#endif
+
+/* FOTA download partition name */
+#ifndef RT_FOTA_FM_PART_NAME
+#define RT_FOTA_FM_PART_NAME    "fm_area"
+#endif
+
+/* FOTA default partition name */
+#ifndef RT_FOTA_DF_PART_NAME
+#define RT_FOTA_DF_PART_NAME    "df_area"
+#endif
+
+/* AES256 encryption algorithm option */
+#define RT_FOTA_ALGO_AES_IV  	"0123456789ABCDEF"
+#define RT_FOTA_ALGO_AES_KEY 	"0123456789ABCDEF0123456789ABCDEF"
 
 #endif

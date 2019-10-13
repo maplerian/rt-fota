@@ -10,76 +10,6 @@
 #ifndef _RT_FOTA_H_
 #define _RT_FOTA_H_
 
-#include <stdint.h>
-#include <stdio.h>
-#include <rtthread.h>
-#include <rtdevice.h>
-#include <board.h>
-#include <fal.h>
-#include <tinycrypt.h>
-#include <fastlz.h>
-#include <quicklz.h>
-
-#define RT_FOTA_SW_VERSION             "0.1.0"
-
-/* FOTA application partition name */
-#ifndef RT_FOTA_APP_PART_NAME
-#define RT_FOTA_APP_PART_NAME           "app"
-#endif
-
-/* FOTA download partition name */
-#ifndef RT_FOTA_FM_PART_NAME
-#define RT_FOTA_FM_PART_NAME           "fm_area"
-#endif
-
-/* FOTA default partition name */
-#ifndef RT_FOTA_DF_PART_NAME
-#define RT_FOTA_DF_PART_NAME           "df_area"
-#endif
-
-#if RT_FOTA_DEBUG
-#ifdef assert
-#undef assert
-#endif
-#define assert(EXPR)                                                           \
-if (!(EXPR))                                                                   \
-{                                                                              \
-    rt_kprintf("(%s) has assert failed at %s.\n", #EXPR, __FUNCTION__);            \
-    while (1);                                                                 \
-}
-
-/* debug level log */
-#ifdef  log_d
-#undef  log_d
-#endif
-#define log_d(...)                     rt_kprintf("[D/FOTA] (%s:%d) ", __FUNCTION__, __LINE__);           rt_kprintf(__VA_ARGS__);rt_kprintf("\n")
-
-#else
-
-#ifdef assert
-#undef assert
-#endif
-#define assert(EXPR)                   ((void)0);
-
-/* debug level log */
-#ifdef  log_d
-#undef  log_d
-#endif
-#define log_d(...)
-#endif /* RT_OTA_DEBUG */
-
-/* error level log */
-#ifdef  log_e
-#undef  log_e
-#endif
-#define log_e(...)                     rt_kprintf("\033[31;22m[E/FOTA] (%s:%d) ", __FUNCTION__, __LINE__);rt_kprintf(__VA_ARGS__);rt_kprintf("\033[0m\n")
-
-/* info level log */
-#ifdef  log_i
-#undef  log_i
-#endif
-#define log_i(...)                     rt_kprintf("\033[36;22m[I/FOTA] ");                                rt_kprintf(__VA_ARGS__);rt_kprintf("\033[0m\n")
-
 #ifdef __CC_ARM                         /* ARM Compiler */
     #define RT_FOTA_WEAK                __weak
 #elif defined (__IAR_SYSTEMS_ICC__)     /* for IAR Compiler */
@@ -87,13 +17,6 @@ if (!(EXPR))                                                                   \
 #elif defined (__GNUC__)                /* GNU GCC Compiler */
     #define RT_FOTA_WEAK                __attribute__((weak))
 #endif /* __CC_ARM */
-
-/**
- * AES256 encryption algorithm option
- */
-#define RT_FOTA_TINY_AES_IV  	"0123456789ABCDEF"
-#define RT_FOTA_TINY_AES_KEY 	"0123456789ABCDEF0123456789ABCDEF"
-
 
 /**
  * FOTA firmware encryption algorithm and compression algorithm
