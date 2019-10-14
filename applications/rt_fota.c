@@ -220,7 +220,7 @@ __exit_partition_verify:
 		rt_memcpy(&fota_part_head, &part_head, sizeof(rt_fota_part_head));
 		rt_exit_critical();
 
-		LOG_I("partition[%s] verify success!", part->name);
+		LOG_D("partition[%s] verify success!", part->name);
 	}
 	else
 	{
@@ -228,7 +228,7 @@ __exit_partition_verify:
 		rt_memset(&fota_part_head, 0x0, sizeof(rt_fota_part_head));
 		rt_exit_critical();
 		
-		LOG_I("Partition[%s] verify failed!", part->name);
+		LOG_D("Partition[%s] verify failed!", part->name);
 	}
 
 	if (body_buf)
@@ -254,8 +254,13 @@ __exit_check_upgrade:
 
 int rt_fota_copy_version(const char *part_name)
 {
+#define THE_NOR_FLASH_GRANULARITY		4096
+
 	int fota_res = RT_FOTA_NO_ERR;
 	const struct fal_partition *part;
+    
+    rt_fota_part_head_t part_head = RT_NULL;
+    rt_uint8_t *cache_buf = RT_NULL;
 
 	part = fal_partition_find(part_name);
 	if (part == RT_NULL)
@@ -264,26 +269,44 @@ int rt_fota_copy_version(const char *part_name)
 		fota_res = RT_FOTA_FW_VERIFY_FAILED;
 		goto __exit_copy_version;
 	}
+	    
+    cache_buf = rt_malloc(THE_NOR_FLASH_GRANULARITY);
+    if (cache_buf == RT_NULL)
+    {
+        LOG_D("Not enough memory for head erase.");
+        fota_res = RT_FOTA_NO_MEM_ERR;
+        goto __exit_copy_version;
+    }
+    part_head = (rt_fota_part_head_t)cache_buf;
 	
-	rt_memcpy(fota_part_head.current_version, fota_part_head.download_version, sizeof(fota_part_head.current_version));
+	if (fal_partition_read(part, 0, cache_buf, THE_NOR_FLASH_GRANULARITY) < 0)
+	{
+		LOG_I("Read partition[%s] failed.", part_name);
+		fota_res = RT_FOTA_PART_READ_ERR;
+		goto __exit_copy_version;
+	}
 	
+	rt_memcpy(part_head->current_version, part_head->download_version, sizeof(part_head->current_version));
 	extern rt_uint32_t rt_fota_crc(rt_uint8_t *buf, rt_uint32_t len);
-	fota_part_head.head_crc = rt_fota_crc((rt_uint8_t *)&fota_part_head, sizeof(rt_fota_part_head) - 4);
+	part_head->head_crc = rt_fota_crc((rt_uint8_t *)part_head, sizeof(rt_fota_part_head) - 4);
 	
-    if (fal_partition_erase(part, 0, sizeof(fota_part_head)) < 0)
+    if (fal_partition_erase(part, 0, THE_NOR_FLASH_GRANULARITY) < 0)
     {
 		LOG_D("Erase partition[%s] failed.", part_name);
 		fota_res = RT_FOTA_PART_ERASE_ERR;
 		goto __exit_copy_version;
     }
 	
-	if (fal_partition_write(part, 0, (const rt_uint8_t *)&fota_part_head, sizeof(fota_part_head)) < 0)
+	if (fal_partition_write(part, 0, (const rt_uint8_t *)cache_buf, THE_NOR_FLASH_GRANULARITY) < 0)
 	{
-		LOG_D("Write partition[%s] failed.", part_name);
+		LOG_I("Write partition[%s] failed.", part_name);
 		fota_res = RT_FOTA_PART_WRITE_ERR;
 		goto __exit_copy_version;
 	}
 __exit_copy_version:
+	if (cache_buf)
+		rt_free(cache_buf);
+	
 	if (fota_res != RT_FOTA_NO_ERR)
 		LOG_I("Copy firmware version failed!");
 	else
@@ -317,7 +340,7 @@ int rt_fota_erase_app_part(void)
 __exit_partition_erase:
 	if (fota_res == RT_FOTA_NO_ERR)
 	{
-		LOG_I("Partition[%s] erase %d bytes success!", part->name, fota_part_head.raw_size);
+		LOG_D("Partition[%s] erase %d bytes success!", part->name, fota_part_head.raw_size);
 	}
 	return fota_res;
 }
@@ -741,7 +764,7 @@ static int rt_fota_start_application(void)
 		goto __exit_start_application;
 	}
 	// 检查栈顶地址是否合法.
-	if (((*(__IO uint32_t *)app_addr) & 0x2ffe0000) == 0x20000000)	
+	if (((*(__IO uint32_t *)app_addr) & 0x2ffe0000) != 0x20000000)	
 	{
 		LOG_I("Illegal Stack code.");
 		fota_res = RT_FOTA_GENERAL_ERR;
@@ -749,11 +772,14 @@ static int rt_fota_start_application(void)
 	}
 
 	LOG_I("Execute application now.");
+    
+    __disable_irq() ; //?????
+    HAL_DeInit();
 
 	//用户代码区第二个字为程序开始地址(复位地址)
 	app_func = (rt_fota_app_func)*(__IO uint32_t *)(app_addr + 4);
 	/* Configure main stack */
-	__set_MSP(app_addr);
+	__set_MSP(*(__IO uint32_t *)app_addr);
 	/* jump to application */
 	app_func();
 	
@@ -783,7 +809,7 @@ void rt_fota_thread_entry(void *arg)
 
 	fota_err = rt_fota_copy_version(RT_FOTA_FM_PART_NAME);	
 	if (fota_err != RT_FOTA_NO_ERR)
-			goto __exit_boot_entry;
+		goto __exit_boot_entry;
 
 __exit_boot_entry:
 	rt_fota_start_application();
@@ -793,7 +819,7 @@ __exit_boot_entry:
 	if (rt_fota_part_fw_verify(RT_FOTA_DF_PART_NAME) == RT_FOTA_NO_ERR)
 	{
 		if (rt_fota_upgrade(RT_FOTA_DF_PART_NAME) == RT_FOTA_NO_ERR)
-		{
+		{		
 			rt_fota_start_application();
 		}
 	}
@@ -851,7 +877,7 @@ void rt_fota_info(rt_uint8_t argc, char **argv)
 	    	{
 	    		if (rt_fota_part_fw_verify(&part_name[i][0]) == RT_FOTA_NO_ERR)
 		    	{
-		    		LOG_I("===== RBL of %s partition =====", RT_FOTA_FM_PART_NAME);
+		    		LOG_I("===== RBL of %s partition =====", &part_name[i][0]);
 		    		LOG_I("| App partition name | %*.s |", 10, fota_part_head.app_part_name);
 
 					rt_memset(put_buf, 0x0, sizeof(put_buf));

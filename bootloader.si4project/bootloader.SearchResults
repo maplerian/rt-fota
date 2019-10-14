@@ -1,3 +1,11 @@
----- shell.h Matches (2 in 2 files) ----
-msh.c (rt-thread\components\finsh) line 18 : #include <shell.h>
-shell.c (rt-thread\components\finsh) line 26 : #include "shell.h"
+---- sfud_erase Matches (10 in 4 files) ----
+erase in fal_flash_sfud_port.c (packages\fal\samples\porting) :     if (sfud_erase(sfud_dev, nor_flash0.addr + offset, size) != SFUD_SUCCESS)
+sfud.c (rt-thread\components\drivers\spi\sfud\src) line 501 : sfud_err sfud_erase(const sfud_flash *flash, uint32_t addr, size_t size) {
+sfud.c (rt-thread\components\drivers\spi\sfud\src) line 804 : sfud_err sfud_erase_write(const sfud_flash *flash, uint32_t addr, size_t size, const uint8_t *data) {
+sfud_erase_write in sfud.c (rt-thread\components\drivers\spi\sfud\src) :     result = sfud_erase(flash, addr, size);
+sfud.h (rt-thread\components\drivers\spi\sfud\inc) line 118 : sfud_err sfud_erase(const sfud_flash *flash, uint32_t addr, size_t size);
+sfud.h (rt-thread\components\drivers\spi\sfud\inc) line 142 : sfud_err sfud_erase_write(const sfud_flash *flash, uint32_t addr, size_t size, const uint8_t *data);
+rt_sfud_control in spi_flash_sfud.c (rt-thread\components\drivers\spi) :         if (sfud_erase(sfud_dev, phy_start_addr, phy_size) != SFUD_SUCCESS) {
+rt_sfud_write in spi_flash_sfud.c (rt-thread\components\drivers\spi) :     if (sfud_erase_write(sfud_dev, phy_pos, phy_size, buffer) != SFUD_SUCCESS) {
+sf in spi_flash_sfud.c (rt-thread\components\drivers\spi) :                     result = sfud_erase(sfud_dev, addr, size);
+sf in spi_flash_sfud.c (rt-thread\components\drivers\spi) :                     result = sfud_erase(sfud_dev, addr, size);

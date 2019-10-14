@@ -28,7 +28,7 @@
 
 #ifdef PKG_USING_YMODEM_OTA
 
-#define DEFAULT_DOWNLOAD_PART           RT_FOTA_DF_PART_NAME
+#define DEFAULT_DOWNLOAD_PART           RT_FOTA_FM_PART_NAME
 
 static char* recv_partition = DEFAULT_DOWNLOAD_PART;
 static size_t update_file_total_size, update_file_cur_size;
@@ -99,7 +99,7 @@ void ymodem_ota(uint8_t argc, char **argv)
         const char *operator = argv[1];
         if (!strcmp(operator, "-p")) {
             if (argc < 3) {
-                rt_kprintf("Usage: ymodem_ota -p <partiton name>.\n");
+                rt_kprintf("Usage: ymdown -p <partiton name>.\n");
                 return;
             } else {
                 /* change default partition to save firmware */
