@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER, STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>..\stm32f407-bootloader;.\rt-thread\include;.\rt-thread\components\drivers\include;.\board\CubeMX_Config\Inc;.\libraries\STM32F4xx_HAL\STM32F4xx_HAL_Driver\Inc;.\libraries\STM32F4xx_HAL\CMSIS\Include;.\libraries\STM32F4xx_HAL\CMSIS\Device\ST\STM32F4xx\Include;.\libraries\HAL_Drivers;.\libraries\HAL_Drivers\config;.\libraries\HAL_Drivers\drv_flash;.\board;.\applications;.\rt-thread\components\drivers\spi\sfud\inc;.\rt-thread\components\drivers\spi;.\packages\fal\inc;.\packages\fal\samples\porting;.\packages\tinycrypt\include;.\packages\quicklz;.\packages\fastlz;.\rt-thread\components\finsh;.\rt-thread\components\utilities\ymodem</IncludePath>
+              <IncludePath>..\stm32f407-bootloader;.\rt-thread\include;.\rt-thread\components\drivers\include;.\board\CubeMX_Config\Inc;.\libraries\STM32F4xx_HAL\STM32F4xx_HAL_Driver\Inc;.\libraries\STM32F4xx_HAL\CMSIS\Include;.\libraries\STM32F4xx_HAL\CMSIS\Device\ST\STM32F4xx\Include;.\libraries\HAL_Drivers;.\libraries\HAL_Drivers\config;.\libraries\HAL_Drivers\drv_flash;.\board;.\applications;.\rt-thread\components\drivers\spi\sfud\inc;.\rt-thread\components\drivers\spi;.\packages\fal\inc;.\packages\fal\samples\porting;.\packages\tinycrypt\include;.\packages\quicklz;.\packages\fastlz;.\rt-thread\components\finsh;.\rt-thread\components\utilities\ymodem;.\packages\SignalLed\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -618,6 +618,16 @@
               <FileName>completion.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\rt-thread\components\drivers\src\completion.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>SignalLed</GroupName>
+          <Files>
+            <File>
+              <FileName>signal_led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\packages\SignalLed\src\signal_led.c</FilePath>
             </File>
           </Files>
         </Group>

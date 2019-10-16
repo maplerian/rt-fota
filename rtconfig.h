@@ -64,8 +64,13 @@
 #define __FINSH_THREAD_PRIORITY     5
 #define FINSH_THREAD_PRIORITY       (RT_THREAD_PRIORITY_MAX / 8 * __FINSH_THREAD_PRIORITY + 1)
 #define FINSH_THREAD_STACK_SIZE     2048
-#define FINSH_HISTORY_LINES	        1
+#define FINSH_USING_HISTORY
+#define FINSH_HISTORY_LINES	        5
 #define FINSH_USING_SYMTAB
+#define FINSH_USING_AUTH
+#define FINSH_DEFAULT_PASSWORD "radiation"
+#define FINSH_PASSWORD_MIN 6
+#define FINSH_PASSWORD_MAX 16
 
 
 /* Device Drivers */
@@ -136,7 +141,7 @@
 #define BSP_RS485_DIR_PIN 52
 
 /* RT-FOTA module define */
-#define RT_FOTA_SW_VERSION      "0.1.0"
+#define RT_FOTA_SW_VERSION      "1.0.0"
 
 /* Enable Ymodem OTA */
 #define PKG_USING_YMODEM_OTA
