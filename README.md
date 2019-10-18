@@ -414,4 +414,4 @@ RT-FOTA可以直接使用在RT-Thread的完整版搭载，只需要将*rt _ fota
 
 维护人: 王希
 
--  [GitHub](https://github/warfalcon), 邮箱：<7859177@qq.com>
+-  [GitHub](https://gitee.com/spunky_973/rt-fota), 邮箱：<7859177@qq.com>
